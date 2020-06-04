@@ -9,6 +9,7 @@
 
     <!--卡片视图区-->
     <el-card>
+
       <!--搜索与添加区域-->
       <el-row :gutter="25">
         <el-col :span="7">
@@ -20,6 +21,7 @@
           <el-button type="primary" round @click="addDialogVisible = true">添加用户</el-button>
         </el-col>
       </el-row>
+
       <!--用户列表区-->
       <el-table :data="userlist" style="width: 100%" border stripe>
         <el-table-column type="index"></el-table-column>
@@ -29,6 +31,7 @@
         <el-table-column prop="role_name" label="角色"></el-table-column>
 
         <el-table-column label="状态">
+          //通过作用域插槽来自定义格式
           <template slot-scope="scope">
             <el-switch v-model="scope.row.mg_state" active-color="#13ce66" inactive-color="#ff4949"
                        @change="userStateChange(scope.row)"></el-switch>
@@ -42,11 +45,12 @@
             <el-button type="danger" icon="el-icon-delete" size="small"
                        @click="removeUserById(scope.row.id, scope.row.username)"></el-button>
             <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
-              <el-button type="warning" icon="el-icon-setting" size="small"></el-button>
+              <el-button type="warning" icon="el-icon-setting" size="small" @click="setRole(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
+
       <!--分页区域-->
       <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
                      :current-page="queryInfo.pagenum" :page-sizes="[1, 2, 5, 10]"
@@ -74,9 +78,9 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-    <el-button @click="addDialogVisible = false">取 消</el-button>
-    <el-button type="primary" @click="addUser">确 定</el-button>
-  </span>
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
+      </span>
     </el-dialog>
 
     <!--修改用户的对话框-->
@@ -97,6 +101,24 @@
                 <el-button type="primary" @click="modifyUserInfo">确 定</el-button>
             </span>
     </el-dialog>
+
+    <!--分配角色的对话框-->
+    <el-dialog title="分配角色" :visible.sync="setRoleDialogVisible" width="30%" @close="setRoleDialogClosed">
+      <div>
+        <p>当前的用户：{{userInfo.username}}</p>
+        <p>当前的角色：{{userInfo.role_name}}</p>
+        <p>分配新角色：
+          <el-select v-model="selectedRoleId" placeholder="请选择">
+            <el-option v-for="item in rolelist" :key="item.id" :label="item.roleName" :value="item.id">
+            </el-option>
+          </el-select>
+        </p>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="saveRoleInfo">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 
 </template>
@@ -107,7 +129,7 @@
 
     data() {
       //验证密码的校验规则
-      var checkPassword = (rule, value, callback) => {
+      let checkPassword = (rule, value, callback) => {
         const regEmail = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/
         if (regEmail.test(value)) {
           return callback()
@@ -115,7 +137,7 @@
         callback(new Error('至少8个字符，至少1个大写字母，1个小写字母和1个数字,不能包含特殊字符（非数字字母）'))
       }
       //验证邮箱的校验规则
-      var checkEmail = (rule, value, callback) => {
+      let checkEmail = (rule, value, callback) => {
         const regEmail = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
         if (regEmail.test(value)) {
           return callback()
@@ -123,7 +145,7 @@
         callback(new Error('请输入合法邮箱'))
       }
       //验证手机号的校验规则
-      var checkMobile = (rule, value, callback) => {
+      let checkMobile = (rule, value, callback) => {
         const regEmail = /^1[0-9]{10}$/
         if (regEmail.test(value)) {
           return callback()
@@ -184,7 +206,16 @@
             { required: true, message: '请输入电话', trigger: 'blur' },
             { validator: checkMobile, trigger: ['blur', 'change'] }
           ]
-        }
+        },
+
+        //控制分配角色对话框的显示和隐藏
+        setRoleDialogVisible: false,
+        //需要被分配角色的用户信息
+        userInfo: {},
+        //所有角色的数据列表
+        rolelist: [],
+        //已经选中的角色id值
+        selectedRoleId: ''
       }
     },
     created() {
@@ -304,6 +335,42 @@
         this.queryInfo.pagenum = 1
         this.getUserList()
 
+      },
+
+      //展示分配决定的对话框
+      async setRole(userInfo) {
+        this.userInfo = userInfo
+        //在展示对话框之前，获取所有角色的列表
+        const { data: res } = await this.$http.get('roles')
+        if (res.meta.status !== 200) {
+          return this.$message.error(res.meta.msg)
+        }
+        this.rolelist = res.data
+
+        this.setRoleDialogVisible = true
+      },
+      //点击按钮，分配角色
+      async saveRoleInfo() {
+        if (!this.selectedRoleId) {
+          return this.$message.error('请选择要分配的角色')
+        }
+        const { data: res } = await this.$http.put(`users/${this.userInfo.id}/role`, { rid: this.selectedRoleId })
+        if (res.meta.status !== 200) {
+          return this.$message.error(res.meta.msg)
+        }
+        this.$notify({
+          title: '成功',
+          message: res.meta.msg,
+          type: 'success',
+          duration: 1000
+        })
+        this.getUserList()
+        this.setRoleDialogVisible = false
+      },
+      //监听分配角色对话框的关闭事件
+      setRoleDialogClosed() {
+        this.selectedRoleId = ''
+        this.userInfo = {}
       }
 
 

@@ -117,7 +117,7 @@
     background-color: #373d41;
     display: flex;
     justify-content: space-between;
-    padding-left: 0;
+    padding-left: 15px;
     align-items: center;
     color: #fff;
     font-size: 20px;
