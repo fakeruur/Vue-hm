@@ -8,6 +8,7 @@ const Welcome = () => import('../components/Welcome')
 const Users = () => import('../views/user/Users')
 const Rights = () => import('../views/power/rights')
 const Roles = () => import('../views/power/roles')
+const Cate = () => import('../views/goods/Cate')
 
 Vue.use(VueRouter)
 
@@ -21,8 +22,9 @@ const routes = [
     children: [
       { path: '/welcome', component: Welcome },
       { path: '/users', component: Users },
-      {path:'/rights',component:Rights},
-      {path:'/roles',component:Roles}
+      { path: '/rights', component: Rights },
+      { path: '/roles', component: Roles },
+      { path: '/categories', component: Cate }
     ]
   }
 ]
@@ -31,6 +33,13 @@ const router = new VueRouter({
   routes,
   mode: 'history'
 })
+
+// 解决ElementUI导航栏中的vue-router在3.0版本以上重复点菜单报错问题
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch(err => err)
+}
+
 
 //挂载路由导航守卫
 router.beforeEach((to, from, next) => {
