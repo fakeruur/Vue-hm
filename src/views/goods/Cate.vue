@@ -201,7 +201,7 @@
       },
       //点击按钮，添加分类
       addCate() {
-        this.$refs.addCateFormRules.validate(async valid => {
+        this.$refs.addCateFormRef.validate(async valid => {
           if (!valid) return
           const { data: res } = await this.$http.post('categories', this.addCateForm)
 
@@ -215,7 +215,7 @@
       },
       //监听对话框的关闭事件，重置表单数据
       addCateDialogClosed() {
-        this.$refs.addCateFormRules.resetFields()
+        this.$refs.addCateFormRef.resetFields()
         this.selectedKeys = []
         this.addCateForm.cat_level = 0
         this.addCateForm.cat_pid = 0
