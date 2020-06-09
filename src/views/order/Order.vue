@@ -159,7 +159,6 @@
       async showPropressBox() {
         const { data: res } = await this.$http.get('/kuaidi/1106975712662')
         this.propressInfo = res.data
-        console.log(this.propressInfo)
         this.propressVisible = true
       }
     }
