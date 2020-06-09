@@ -29,7 +29,7 @@
 
 <script>
   export default {
-    name: 'rights',
+    name: 'Rights',
     data() {
       return {
         //权限列表

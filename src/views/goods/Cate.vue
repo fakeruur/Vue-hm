@@ -98,7 +98,7 @@
             label: '排序',
             //自定义模板列
             type: 'template',
-            template: 'order'
+            template: 'Order.vue'
           }, {
             label: '操作',
             //自定义模板列
